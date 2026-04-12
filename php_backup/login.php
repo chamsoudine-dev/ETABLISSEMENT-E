@@ -246,6 +246,8 @@
     </div>
 
     <script src="js/main.js"></script>
+    <script type="module" src="js/firebase-config.js"></script>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const passwordToggle = document.getElementById('passwordToggle');
@@ -259,6 +261,11 @@
             });
 
             // Le formulaire est maintenant géré par auth/login_process.php en PHP
+
+            // Check Firebase Connection
+            if (window.firebaseApp) {
+                console.log("Firebase status: Connected to " + window.firebaseApp.options.projectId);
+            }
         });
         });
     </script>

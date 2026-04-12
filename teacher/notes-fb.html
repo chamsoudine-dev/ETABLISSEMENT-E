@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saisie Notes - LTD Firebase</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .saving-status {
+            font-size: 0.8rem;
+            color: #10b981;
+            display: none;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar-container">
+        <div class="navbar-wrapper">
+            <a href="dashboard-fb.html" class="navbar-logo">
+                <div class="logo-icon"><i class="fas fa-graduation-cap"></i></div>
+                <div class="logo-text"><span id="headerTitle">Saisie des Notes</span></div>
+            </a>
+            <div class="user-profile">
+                <a href="dashboard-fb.html" class="btn btn-secondary btn-sm"><i class="fas fa-arrow-left"></i> Retour</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-edit"></i> <span id="pageTitle">Chargement...</span></h1>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="flex gap-4">
+                    <div style="flex: 1;">
+                        <label>Trimestre</label>
+                        <select id="trimestreSelect" class="btn btn-secondary" style="width: 100%; text-align: left;">
+                            <option value="1er">1er Trimestre</option>
+                            <option value="2e">2e Trimestre</option>
+                            <option value="3e">3e Trimestre</option>
+                        </select>
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Type d'évaluation</label>
+                        <select id="typeSelect" class="btn btn-secondary" style="width: 100%; text-align: left;">
+                            <option value="classe">Note de Classe</option>
+                            <option value="composition">Composition</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Matricule</th>
+                        <th>Nom complet</th>
+                        <th>Note /20 <span id="savingIndicator" class="saving-status">L'enregistrement est automatique...</span></th>
+                    </tr>
+                </thead>
+                <tbody id="studentsTableBody">
+                    <!-- Dynamic -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script type="module">
+        import { checkAuthState } from '../js/firebase-auth.js';
+        import { saveNote, getStudentsByClass } from '../js/firebase-db.js';
+
+        checkAuthState('enseignant');
+
+        const params = new URLSearchParams(window.location.search);
+        const assignId = params.get('assignId');
+        const classeId = params.get('classeId');
+        const matiere = params.get('matiere');
+        const classe = params.get('classe');
+
+        document.getElementById('pageTitle').textContent = `${matiere} - ${classe}`;
+
+        const trimester = document.getElementById('trimestreSelect');
+        const type = document.getElementById('typeSelect');
+        const indicator = document.getElementById('savingIndicator');
+
+        // Fetch students for this class
+        getStudentsByClass(classeId, (students) => {
+            const tbody = document.getElementById('studentsTableBody');
+            tbody.innerHTML = '';
+
+            students.forEach(student => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${student.matricule}</td>
+                    <td>${student.prenom} ${student.nom}</td>
+                    <td>
+                        <input type="number" step="0.25" min="0" max="20" 
+                               value="${student.tempNote || ''}"
+                               placeholder="--" 
+                               data-id="${student.id}"
+                               style="width: 80px; padding: 8px; border: 1px solid var(--border); border-radius: 4px;">
+                    </td>
+                `;
+                
+                const input = tr.querySelector('input');
+                input.addEventListener('change', async (e) => {
+                    indicator.style.display = 'inline';
+                    try {
+                        await saveNote(student.id, assignId, trimester.value, type.value, e.target.value);
+                        setTimeout(() => indicator.style.display = 'none', 1000);
+                    } catch (err) {
+                        alert('Erreur lors de l\'enregistrement');
+                    }
+                });
+
+                tbody.appendChild(tr);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enseignant - LTD Firebase</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <nav class="navbar-container">
+        <div class="navbar-wrapper">
+            <a href="dashboard-fb.html" class="navbar-logo">
+                <div class="logo-icon"><i class="fas fa-graduation-cap"></i></div>
+                <div class="logo-text"><span class="logo-title">LTD Enseignant</span></div>
+            </a>
+            <div class="user-profile">
+                <span id="userName">Chargement...</span>
+                <button id="logoutBtn" class="btn btn-primary btn-sm"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="breadcrumbs">
+            <a href="dashboard-fb.html">Accueil</a> <i class="fas fa-chevron-right"></i> <span>Mes Classes</span>
+        </div>
+
+        <div class="header">
+            <h1><i class="fas fa-chalkboard-teacher"></i> Mes Classes & Matières</h1>
+        </div>
+
+        <div id="notifArea" style="display:none; background: #fffbeb; border: 1px solid #fcd34d; padding: 15px; border-radius: 10px; margin-bottom: 20px;">
+            <div style="font-weight: bold; color: #92400e;"><i class="fas fa-exclamation-triangle"></i> Message de la Direction :</div>
+            <p id="notifContent" style="margin: 5px 0 0; color: #78350f;"></p>
+        </div>
+
+        <div class="student-grid" id="assignmentsGrid">
+            <!-- Dynamic content -->
+        </div>
+    </div>
+
+    <script type="module">
+        import { checkAuthState, logoutUser } from '../js/firebase-auth.js';
+        import { collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { db, auth } from '../js/firebase-config.js';
+        import { listenNotifications } from '../js/firebase-db.js';
+
+        checkAuthState('enseignant');
+        document.getElementById('userName').textContent = localStorage.getItem('ltd_user_name') || 'Enseignant';
+        document.getElementById('logoutBtn').addEventListener('click', logoutUser);
+
+        // Listen for Direction Notifications
+        listenNotifications((notif) => {
+            const area = document.getElementById('notifArea');
+            const content = document.getElementById('notifContent');
+            if (notif && notif.message) {
+                area.style.display = 'block';
+                content.textContent = notif.message;
+            }
+        });
+
+        // Fetch assignments for this specific teacher
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                const q = query(collection(db, "assignations"), where("enseignantUid", "==", user.uid));
+                onSnapshot(q, (snapshot) => {
+                    const grid = document.getElementById('assignmentsGrid');
+                    grid.innerHTML = '';
+                    
+                    snapshot.forEach(doc => {
+                        const assign = doc.data();
+                        const card = document.createElement('div');
+                        card.className = 'student-card clickable-card';
+                        card.style.cursor = 'pointer';
+                        card.innerHTML = `
+                            <div class="flex items-center gap-4 mb-4">
+                                <div class="logo-icon" style="width: 50px; height: 50px;"><i class="fas fa-book"></i></div>
+                                <div>
+                                    <div style="font-weight: bold; font-size: 1.1rem;">${assign.classeNom}</div>
+                                    <div style="color: var(--text-light); font-size: 0.9rem;">${assign.matiereNom}</div>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary btn-full" style="width: 100%;">
+                                <i class="fas fa-edit"></i> Saisir les notes
+                            </button>
+                        `;
+                        card.onclick = () => {
+                            window.location.href = `notes-fb.html?assignId=${doc.id}&classeId=${assign.classeId}&matiere=${assign.matiereNom}&classe=${assign.classeNom}`;
+                        };
+                        grid.appendChild(card);
+                    });
+
+                    if (snapshot.empty) {
+                        grid.innerHTML = '<div class="card" style="width: 100%; grid-column: 1/-1;"><div class="card-body text-center"><p>Aucune classe assignée.</p></div></div>';
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

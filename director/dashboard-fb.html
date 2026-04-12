@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Directeur - LTD Firebase</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .realtime-badge {
+            background: #10b981;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-left: 10px;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar-container">
+        <div class="navbar-wrapper">
+            <a href="dashboard-fb.html" class="navbar-logo">
+                <div class="logo-icon"><i class="fas fa-graduation-cap"></i></div>
+                <div class="logo-text"><span class="logo-title">LTD Directeur</span><span class="realtime-badge">Temps Réel</span></div>
+            </a>
+            <div class="user-profile">
+                <span id="userName">Chargement...</span>
+                <button id="logoutBtn" class="btn btn-primary btn-sm"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="breadcrumbs">
+            <a href="dashboard-fb.html">Accueil</a> <i class="fas fa-chevron-right"></i> <span>Tableau de Bord</span>
+        </div>
+
+        <div class="header">
+            <h1><i class="fas fa-user-tie"></i> Gestion de l'établissement</h1>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header"><h6><i class="fas fa-plus-circle"></i> AJOUT DE STAFF</h6></div>
+            <div class="card-body">
+                <p style="color: var(--text-light); margin-bottom: 20px;">Utilisez la console Firebase pour créer les comptes Auth, ou implémentez une fonction Cloud.</p>
+                <div class="flex gap-4">
+                    <button class="btn btn-secondary" onclick="alert('Fonctionnalité en cours de migration. Utilisez la Console Firebase pour le moment.')">
+                        <i class="fas fa-user-plus"></i> Créer un compte Staff
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header"><h6><i class="fas fa-bullhorn"></i> DIFFUSION D'ANNONCE (TEMPS RÉEL)</h6></div>
+            <div class="card-body">
+                <div class="flex gap-2">
+                    <input type="text" id="notifMessage" placeholder="Envoyer un message à tout le personnel..." 
+                           style="flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 5px;">
+                    <button id="sendNotifBtn" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Diffuser</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><h6><i class="fas fa-list"></i> ENSEIGNANTS ACTIFS</h6></div>
+            <div class="card-body">
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Nom & Prénom</th>
+                                <th>Téléphone / Email</th>
+                                <th>Statut</th>
+                            </tr>
+                        </thead>
+                        <tbody id="teachersTableBody">
+                            <tr><td colspan="3" class="text-center">Chargement des données...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { checkAuthState, logoutUser } from '../js/firebase-auth.js';
+        import { getTeachers, sendNotification } from '../js/firebase-db.js';
+
+        // Security check
+        checkAuthState('admin');
+
+        // Display user info
+        document.getElementById('userName').textContent = localStorage.getItem('ltd_user_name') || 'Directeur';
+
+        // Logout
+        document.getElementById('logoutBtn').addEventListener('click', logoutUser);
+
+        // Send Notification
+        document.getElementById('sendNotifBtn').addEventListener('click', async () => {
+            const msg = document.getElementById('notifMessage').value;
+            if (msg) {
+                await sendNotification(msg);
+                document.getElementById('notifMessage').value = '';
+                alert('Annonce diffusée en temps réel !');
+            }
+        });
+
+        // Real-time Data fetch
+        getTeachers((teachers) => {
+            const tbody = document.getElementById('teachersTableBody');
+            tbody.innerHTML = '';
+
+            if (teachers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="text-center">Aucun enseignant trouvé.</td></tr>';
+                return;
+            }
+
+            teachers.forEach(teacher => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${teacher.prenom} ${teacher.nom}</td>
+                    <td>${teacher.telephone || 'Non renseigné'}</td>
+                    <td><span class="text-success"><i class="fas fa-circle" style="font-size: 0.7rem;"></i> En ligne</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -89,5 +89,6 @@ $classes = $stmt->fetchAll();
             </div>
         </div>
     </div>
+    <script type="module" src="../js/firebase-config.js"></script>
 </body>
 </html>

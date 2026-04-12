@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Surveillant - LTD Firebase</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <nav class="navbar-container">
+        <div class="navbar-wrapper">
+            <a href="dashboard-fb.html" class="navbar-logo">
+                <div class="logo-icon"><i class="fas fa-chart-line"></i></div>
+                <div class="logo-text"><span class="logo-title">LTD Suivi</span></div>
+            </a>
+            <div class="user-profile">
+                <span id="userName">Chargement...</span>
+                <button id="logoutBtn" class="btn btn-primary btn-sm"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-tachometer-alt"></i> Statistiques Globales</h1>
+        </div>
+
+        <div class="stats-cards">
+            <div class="stat-card info">
+                <div class="stat-icon bg-info"><i class="fas fa-users"></i></div>
+                <div class="stat-number" id="totalStudents">--</div>
+                <div class="stat-label">Élèves Enregistrés</div>
+            </div>
+            <div class="stat-card success">
+                <div class="stat-icon bg-success"><i class="fas fa-check-double"></i></div>
+                <div class="stat-number" id="totalGrades">--</div>
+                <div class="stat-label">Notes Saisies</div>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header"><h6>Derniers changements (Live)</h6></div>
+            <div class="card-body">
+                <ul id="liveLog" style="list-style: none; padding: 0; font-size: 0.9rem; color: var(--text-light);">
+                    <li>En attente de mises à jour...</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { checkAuthState, logoutUser } from '../js/firebase-auth.js';
+        import { collection, onSnapshot, query, limit, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { db } from '../js/firebase-config.js';
+
+        checkAuthState('personnels_admin');
+        document.getElementById('userName').textContent = localStorage.getItem('ltd_user_name') || 'Surveillant';
+        document.getElementById('logoutBtn').addEventListener('click', logoutUser);
+
+        // Stats counts
+        onSnapshot(collection(db, "eleves"), snap => {
+            document.getElementById('totalStudents').textContent = snap.size;
+        });
+
+        onSnapshot(collection(db, "notes"), snap => {
+            document.getElementById('totalGrades').textContent = snap.size;
+        });
+
+        // Live Log
+        const logQ = query(collection(db, "notes"), orderBy("updatedAt", "desc"), limit(5));
+        onSnapshot(logQ, snap => {
+            const log = document.getElementById('liveLog');
+            log.innerHTML = '';
+            snap.forEach(doc => {
+                const data = doc.data();
+                const li = document.createElement('li');
+                li.style.padding = '8px 0';
+                li.style.borderBottom = '1px solid #eee';
+                li.innerHTML = `<i class="fas fa-plus-circle text-success"></i> Nouvelle note : ${data.note}/20 (ID: ${data.eleveId})`;
+                log.appendChild(li);
+            });
+        });
+    </script>
+</body>
+</html>
