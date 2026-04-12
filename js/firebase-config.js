@@ -5,6 +5,7 @@
 
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
@@ -21,6 +22,14 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
+
+// Initialize App Check (Self-hosted reCAPTCHA v3 or Enterprise)
+// Note: You must obtain a site key from Google reCAPTCHA
+const appCheck = initializeAppCheck(app, {
+  provider: new ReCaptchaV3Provider('RECAPTCHA_SITE_KEY_HERE'),
+  isTokenAutoRefreshEnabled: true
+});
+
 const db = getFirestore(app);
 const auth = getAuth(app);
 const analytics = getAnalytics(app);
