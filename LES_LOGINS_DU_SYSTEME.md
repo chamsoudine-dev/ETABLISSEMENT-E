@@ -7,7 +7,7 @@ L'accès se fait via la page : `login-fb.html`
 
 | Rôle | Email (Identifiant) | Mot de Passe par défaut | Redirection |
 | :--- | :--- | :--- | :--- |
-| **Directeur / Admin** | `admin@ltd.edu` | `admin123` | `/director/dashboard-fb.html` |
+| **Directeur / Admin** | `91038061@ltd.edu` | `123456` | `/director/dashboard-fb.html` |
 | **Enseignant** | *(À créer via Firebase)* | *(Défini à la création)* | `/teacher/dashboard-fb.html` |
 | **Surveillant** | *(À créer via Firebase)* | *(Défini à la création)* | `/supervisor/dashboard-fb.html` |
 
