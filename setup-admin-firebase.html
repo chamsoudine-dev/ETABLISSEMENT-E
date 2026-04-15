@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Initialisation Admin - LTD Firebase</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body { font-family: sans-serif; padding: 50px; background: #f0f2f5; }
+        .setup-card { background: white; padding: 30px; border-radius: 12px; max-width: 500px; margin: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .status { margin-top: 20px; padding: 15px; border-radius: 8px; display: none; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+
+<div class="setup-card">
+    <h2>🚀 Configuration du Compte Admin</h2>
+    <p>Ce script va créer votre compte administrateur dans Firebase (Auth + Firestore).</p>
+    
+    <div id="statusBox" class="status"></div>
+
+    <form id="setupForm">
+        <div style="margin-bottom: 15px;">
+            <label>Email Admin</label><br>
+            <input type="email" id="email" value="admin@ltd.edu" required style="width: 100%; padding: 10px; margin-top: 5px;">
+        </div>
+        <div style="margin-bottom: 15px;">
+            <label>Mot de passe</label><br>
+            <input type="text" id="password" value="admin123" required style="width: 100%; padding: 10px; margin-top: 5px;">
+        </div>
+        <button type="submit" id="setupBtn" class="btn btn-primary" style="width: 100%; padding: 12px; background: #3b82f6; border: none; color: white; border-radius: 6px; cursor: pointer;">
+            Créer le compte maintenant
+        </button>
+    </form>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyCKTTOVJYmNL8uGIsOwSAlswmKwcj2rf3Y",
+      authDomain: "etablissement-c3024.firebaseapp.com",
+      projectId: "etablissement-c3024",
+      storageBucket: "etablissement-c3024.firebasestorage.app",
+      messagingSenderId: "297182802162",
+      appId: "1:297182802162:web:b1f95cae80a14467dee06b"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const form = document.getElementById('setupForm');
+    const statusBox = document.getElementById('statusBox');
+    const setupBtn = document.getElementById('setupBtn');
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+
+        statusBox.style.display = 'none';
+        setupBtn.disabled = true;
+        setupBtn.textContent = "Création en cours...";
+
+        try {
+            // 1. Créer l'utilisateur dans Firebase Auth
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+
+            // 2. Créer le document dans Firestore avec le rôle admin
+            await setDoc(doc(db, "users", user.uid), {
+                nom: "Directeur",
+                prenom: "LTD",
+                email: email,
+                role: "admin",
+                createdAt: new Date().toISOString()
+            });
+
+            statusBox.innerHTML = `✅ <b>Succès !</b><br>Le compte admin a été créé.<br><br><a href="login-fb.html" style="color: inherit; font-weight: bold;">Cliquer ici pour vous connecter</a>`;
+            statusBox.className = 'status success';
+            statusBox.style.display = 'block';
+            form.style.display = 'none';
+
+        } catch (error) {
+            console.error(error);
+            statusBox.textContent = "❌ Erreur : " + error.message;
+            statusBox.className = 'status error';
+            statusBox.style.display = 'block';
+            setupBtn.disabled = false;
+            setupBtn.textContent = "Réessayer";
+        }
+    });
+</script>
+
+</body>
+</html>
